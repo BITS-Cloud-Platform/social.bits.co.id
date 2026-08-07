@@ -1,6 +1,14 @@
 {
   "name": "social-manager",
   "version": "1.0.0",
+  "description": "Modern social media account management platform with enterprise-grade encryption",
+  "author": "BITS Cloud Platform",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BITS-Cloud-Platform/social-manager"
+  },
+  "homepage": "https://social.bits.co.id",
   "type": "module",
   "private": true,
   "scripts": {

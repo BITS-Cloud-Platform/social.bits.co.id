@@ -1,6 +1,9 @@
-# Social Media Account Manager
+# Social Manager
 
-Aplikasi modern untuk mengelola dan mengorganisir akun social media Anda across multiple projects. Dibangun dengan Hono + React dan di-deploy di Cloudflare Workers.
+Modern social media account management platform. Organize and secure your social accounts across multiple projects with enterprise-grade encryption.
+
+**Production:** https://social.bits.co.id  
+**Repository:** https://github.com/BITS-Cloud-Platform/social-manager
 
 ## 🎯 Fitur Utama
 
