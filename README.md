@@ -2,8 +2,12 @@
 
 Modern social media account management platform. Organize and secure your social accounts across multiple projects with enterprise-grade encryption.
 
-**Production:** https://social.bits.co.id  
-**Repository:** https://github.com/BITS-Cloud-Platform/social-manager
+**Live at:** https://social.bits.co.id  
+**Repository:** https://github.com/BITS-Cloud-Platform/social.bits.co.id
+
+---
+
+Powered by [Banten IT Solutions](https://bits.co.id)
 
 ## 🎯 Fitur Utama
 
