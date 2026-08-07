@@ -150,22 +150,19 @@ function PasswordReveal({ accountId }: { accountId: string }) {
 
   if (!show) {
     return (
-      <Button variant="ghost" size="sm" onClick={reveal} loading={loading} className="h-7 px-2 text-xs text-zinc-500 hover:text-zinc-300">
-        <Eye className="h-3 w-3 mr-1" /> Reveal
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={reveal} disabled={loading} title="Show password">
+        {loading ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-300" /> : <Eye className="h-4 w-4" />}
       </Button>
     );
   }
 
   return (
     <div className="flex items-center gap-1">
-      <code className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-200 font-mono max-w-[150px] truncate">
-        {password}
-      </code>
-      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copy} title="Copy">
-        {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copy} title="Copy password">
+        {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
       </Button>
-      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShow(false)} title="Hide">
-        <EyeOff className="h-3 w-3" />
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShow(false)} title="Hide password">
+        <EyeOff className="h-4 w-4" />
       </Button>
     </div>
   );
@@ -374,19 +371,12 @@ export function ProjectPage() {
         </div>
       ) : (
         <>
-          {/* Results info */}
-          <div className="flex items-center justify-between text-sm text-zinc-500">
-            <span>
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAccounts.length)} of {filteredAccounts.length} accounts
-            </span>
-          </div>
-
           {/* Accounts list */}
           <div className="space-y-2">
             {paginatedAccounts.map((account: SocialAccount) => (
               <div
                 key={account.id}
-                className="group flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
+                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
               >
                 {/* Platform icon */}
                 <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg shrink-0', PLATFORM_BG[account.platform as Platform])}>
@@ -407,12 +397,12 @@ export function ProjectPage() {
                 </div>
 
                 {/* Password reveal */}
-                <div className="shrink-0 hidden sm:block">
+                <div className="shrink-0">
                   <PasswordReveal accountId={account.id} />
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 shrink-0">
                   <Button
                     variant="ghost"
                     size="icon"
