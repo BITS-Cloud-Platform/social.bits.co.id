@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, LogOut, Menu, X } from 'lucide-react';
+import { LayoutGrid, User, LogOut, Shield, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../store/auth';
 import { api } from '../lib/api';
@@ -8,6 +8,7 @@ import { Tooltip } from './ui';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutGrid, label: 'Projects' },
+  { to: '/profile', icon: User, label: 'Profile' },
 ];
 
 export function Sidebar() {
@@ -24,17 +25,19 @@ export function Sidebar() {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-zinc-950 border-r border-zinc-800">
-      {/* Logo - Icon Only */}
+      {/* Logo - Shield Icon */}
       <div className="flex h-14 items-center justify-center border-b border-zinc-800">
-        <Link to="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600 hover:bg-violet-700 transition-colors">
-          <LayoutGrid className="h-4 w-4 text-white" />
-        </Link>
+        <Tooltip content="Social Manager" side="right">
+          <Link to="/dashboard" className="flex items-center justify-center w-10 h-10 rounded-lg bg-violet-600 hover:bg-violet-700 transition-colors">
+            <Shield className="h-5 w-5 text-white" />
+          </Link>
+        </Tooltip>
       </div>
 
       {/* Nav - Icons Only */}
       <nav className="flex-1 flex flex-col items-center gap-2 p-3">
         {navItems.map(({ to, icon: Icon, label }) => (
-          <Tooltip key={to} content={label}>
+          <Tooltip key={to} content={label} side="right">
             <Link
               to={to}
               onClick={() => setMobileOpen(false)}
@@ -51,23 +54,9 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* User Profile + Logout - Icons Only */}
-      <div className="border-t border-zinc-800 p-3 flex flex-col items-center gap-2">
-        {/* Profile Link */}
-        <Tooltip content={`${user?.name} - Profile Settings`}>
-          <Link
-            to="/profile"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-violet-600 hover:bg-violet-700 transition-colors"
-          >
-            <span className="text-sm font-semibold text-white">
-              {user?.name?.[0]?.toUpperCase() ?? 'U'}
-            </span>
-          </Link>
-        </Tooltip>
-        
-        {/* Logout */}
-        <Tooltip content="Sign out">
+      {/* Logout Only */}
+      <div className="border-t border-zinc-800 p-3 flex flex-col items-center">
+        <Tooltip content="Sign out" side="right">
           <button
             onClick={handleLogout}
             className="flex items-center justify-center w-10 h-10 rounded-lg text-zinc-400 hover:bg-zinc-800/50 hover:text-red-400 transition-colors"

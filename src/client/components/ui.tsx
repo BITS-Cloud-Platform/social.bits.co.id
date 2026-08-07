@@ -161,12 +161,27 @@ export const Alert = ({ className, variant = 'default', ...props }: AlertProps) 
 };
 
 // Tooltip (simple hover)
-interface TooltipProps { content: string; children: React.ReactNode; }
-export const Tooltip = ({ content, children }: TooltipProps) => (
-  <div className="group relative inline-flex">
-    {children}
-    <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-200 opacity-0 transition-opacity group-hover:opacity-100 z-50">
-      {content}
-    </span>
-  </div>
-);
+interface TooltipProps { 
+  content: string; 
+  children: React.ReactNode;
+  side?: 'top' | 'right' | 'bottom' | 'left';
+}
+export const Tooltip = ({ content, children, side = 'top' }: TooltipProps) => {
+  const positions = {
+    top: 'bottom-full left-1/2 mb-1.5 -translate-x-1/2',
+    right: 'left-full top-1/2 ml-1.5 -translate-y-1/2',
+    bottom: 'top-full left-1/2 mt-1.5 -translate-x-1/2',
+    left: 'right-full top-1/2 mr-1.5 -translate-y-1/2',
+  };
+  return (
+    <div className="group relative inline-flex">
+      {children}
+      <span className={cn(
+        "pointer-events-none absolute whitespace-nowrap rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-200 opacity-0 transition-opacity group-hover:opacity-100 z-50",
+        positions[side]
+      )}>
+        {content}
+      </span>
+    </div>
+  );
+};
