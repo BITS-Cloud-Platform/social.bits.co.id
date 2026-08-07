@@ -390,16 +390,61 @@ Workers-types has stricter peer deps; `--legacy-peer-deps` resolves safely.
 ### CORS Errors in Production
 Update CORS origin in `src/worker/index.ts` to match your deployment domain.
 
-## 📦 Deployment Checklist
+## 🤖 CI/CD — Auto Deploy ke Cloudflare (GitHub Actions)
+
+Proyek ini dilengkapi workflow GitHub Actions (`.github/workflows/deploy.yml`) yang **otomatis deploy ke Cloudflare setiap push ke branch `main`**.
+
+Workflow menggunakan versi terbaru dari semua action:
+- `actions/checkout@v6`
+- `actions/setup-node@v6` (Node.js 24)
+- `cloudflare/wrangler-action@v4`
+
+### Alur kerja
+
+Pada setiap `push` ke `main` (atau via **Run workflow** manual), workflow otomatis:
+
+1. `npm ci --legacy-peer-deps` — install dependensi
+2. `npm run type-check` — validasi TypeScript strict
+3. `npm run test` — jalankan unit tests (17 tests)
+4. `npm run build` — build client & worker
+5. `wrangler d1 migrations apply social-manager-db --remote` — apply migrasi D1
+6. `wrangler deploy` — deploy worker + static assets
+
+### 🔑 Setup Sekali (sebelum push pertama)
+
+Buka **Settings → Secrets and variables → Actions** di GitHub repo, lalu tambahkan 2 secrets:
+
+| Secret | Nilai | Cara dapat |
+|--------|-------|------------|
+| `CLOUDFLARE_API_TOKEN` | API token Cloudflare | Dashboard **My Profile → API Tokens → Create Token** dengan permissions: `Account - Workers Scripts - Edit`, `Account - D1 - Edit`, `Account - Account Settings - Read`, `Zone - Workers Routes - Edit` |
+| `CLOUDFLARE_ACCOUNT_ID` | Account ID Cloudflare | Dashboard → sidebar kanan (berikut nama akun, format hex 32 karakter) |
+
+> ⚠️ Pastikan `database_id` di `wrangler.toml` sudah diisi ID D1 asli (bukan placeholder `"local-dev-id"`), karena workflow apply migrasi `--remote` terhadap database tersebut.
+
+> ⚠️ `JWT_SECRET` dan `ENCRYPTION_KEY` sudah diset satu kali via `wrangler secret put` dan dipertahankan Cloudflare antar deploy — tidak perlu di-set di GitHub.
+
+### 🧪 Uji coba tanpa push
+
+Buka tab **Actions → Deploy to Cloudflare → Run workflow** lalu pilih branch `main`. Ini menjalankan pipeline yang sama tanpa push.
+
+### 🔒 Keamanan workflow
+
+`concurrency` mencegah dua deploy berjalan bersamaan, dan `permissions: contents: read` menjaga prinsip least-privilege. Token tidak pernah ditulis ke log.
+
+---
+
+## 📦 Deployment Checklist (Publikasi pertama)
 
 - [ ] `wrangler d1 create social-manager-db`
-- [ ] Update `database_id` in `wrangler.toml`
+- [ ] Update `database_id` di `wrangler.toml` (ID asli, bukan placeholder)
 - [ ] `npm run db:migrate:remote`
 - [ ] `wrangler secret put JWT_SECRET`
 - [ ] `wrangler secret put ENCRYPTION_KEY`
-- [ ] Update CORS origin for production domain
-- [ ] `npm run build`
-- [ ] `npm run deploy`
+- [ ] Update CORS origin untuk production domain
+- [ ] Tambah secrets `CLOUDFLARE_API_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` di GitHub
+- [ ] Tindakan terakhir: push ke `main` (workflow auto-deploy)
+
+**Setelah itu**, semua update cukup `git push` ke `main` — deploy otomatis.
 
 ## 📖 Further Customization
 
