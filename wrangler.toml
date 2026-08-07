@@ -8,6 +8,11 @@ directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
+# Custom domain — zone_id diisi otomatis oleh workflow GitHub Actions
+routes = [
+  { pattern = "social.bits.co.id", custom_domain = true, zone_id = "ZONE_ID_PLACEHOLDER" }
+]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "social-manager-db"
