@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Plus, ArrowLeft, Pencil, Trash2, Eye, EyeOff, Copy, Check, Users } from 'lucide-react';
+import { Plus, ArrowLeft, Pencil, Trash2, Eye, EyeOff, Copy, Check, Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +14,8 @@ import {
   Badge, Separator,
 } from '../components/ui';
 import { cn } from '../lib/utils';
+
+const ITEMS_PER_PAGE = 10;
 
 const accountSchema = z.object({
   platform: z.enum(PLATFORMS),
@@ -222,6 +224,8 @@ export function ProjectPage() {
   const [editAccount, setEditAccount] = useState<SocialAccount | null>(null);
   const [deleteAccount, setDeleteAccount] = useState<SocialAccount | null>(null);
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -260,7 +264,42 @@ export function ProjectPage() {
   };
 
   const platforms = [...new Set(accounts.map(a => a.platform))];
-  const filtered = filterPlatform === 'all' ? accounts : accounts.filter(a => a.platform === filterPlatform);
+
+  // Filter and search logic
+  const filteredAccounts = useMemo(() => {
+    let result = accounts;
+    
+    // Filter by platform
+    if (filterPlatform !== 'all') {
+      result = result.filter(a => a.platform === filterPlatform);
+    }
+    
+    // Search by account name, email, or platform
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(a => 
+        a.accountName.toLowerCase().includes(query) ||
+        a.emailHandle.toLowerCase().includes(query) ||
+        a.platform.toLowerCase().includes(query) ||
+        (a.notes?.toLowerCase().includes(query) ?? false)
+      );
+    }
+    
+    return result;
+  }, [accounts, filterPlatform, searchQuery]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAccounts.length / ITEMS_PER_PAGE);
+  const paginatedAccounts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return filteredAccounts.slice(start, end);
+  }, [filteredAccounts, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterPlatform, searchQuery]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -288,37 +327,43 @@ export function ProjectPage() {
 
       {error && <Alert variant="destructive">{error}</Alert>}
 
-      {/* Platform filter */}
-      {platforms.length > 1 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => setFilterPlatform('all')}
-            className={cn('px-2.5 py-1 rounded-full text-xs font-medium transition-colors', filterPlatform === 'all' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300')}
-          >
-            All ({accounts.length})
-          </button>
-          {platforms.map(p => (
-            <button
-              key={p}
-              onClick={() => setFilterPlatform(p)}
-              className={cn('px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1', filterPlatform === p ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300')}
-            >
-              <PlatformIcon platform={p as Platform} className="w-3 h-3" />
-              {p}
-            </button>
-          ))}
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+          <Input
+            placeholder="Search accounts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
         </div>
-      )}
+
+        {/* Platform filter */}
+        {platforms.length > 0 && (
+          <Select
+            value={filterPlatform}
+            onChange={(e) => setFilterPlatform(e.target.value)}
+            className="sm:w-48"
+          >
+            <option value="all">All Platforms ({accounts.length})</option>
+            {platforms.map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </Select>
+        )}
+      </div>
 
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-lg border border-zinc-800 bg-zinc-900/30 animate-pulse" />)}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : filteredAccounts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-3">
           <Users className="h-10 w-10 text-zinc-700" />
           <p className="text-sm text-zinc-500">
-            {accounts.length === 0 ? 'No accounts yet' : 'No accounts match filter'}
+            {accounts.length === 0 ? 'No accounts yet' : searchQuery ? 'No accounts found' : 'No accounts match filter'}
           </p>
           {accounts.length === 0 && (
             <Button variant="outline" onClick={() => setShowAdd(true)}>
@@ -328,59 +373,108 @@ export function ProjectPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map(account => (
-            <div
-              key={account.id}
-              className="group flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3 hover:border-zinc-700 transition-colors"
-            >
-              {/* Platform icon */}
-              <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg shrink-0', PLATFORM_BG[account.platform as Platform])}>
-                <PlatformIcon
-                  platform={account.platform as Platform}
-                  className={cn('h-4 w-4', PLATFORM_COLORS[account.platform as Platform])}
-                />
-              </div>
+        <>
+          {/* Results info */}
+          <div className="flex items-center justify-between text-sm text-zinc-500">
+            <span>
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAccounts.length)} of {filteredAccounts.length} accounts
+            </span>
+          </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-zinc-100 truncate">{account.accountName}</span>
-                  <Badge variant="secondary" className="shrink-0">{account.platform}</Badge>
+          {/* Accounts list */}
+          <div className="space-y-2">
+            {paginatedAccounts.map((account: SocialAccount) => (
+              <div
+                key={account.id}
+                className="group flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all"
+              >
+                {/* Platform icon */}
+                <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg shrink-0', PLATFORM_BG[account.platform as Platform])}>
+                  <PlatformIcon
+                    platform={account.platform as Platform}
+                    className={cn('h-5 w-5', PLATFORM_COLORS[account.platform as Platform])}
+                  />
                 </div>
-                <p className="text-xs text-zinc-500 truncate mt-0.5">{account.emailHandle}</p>
-                {account.notes && <p className="text-xs text-zinc-600 truncate mt-0.5">{account.notes}</p>}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-zinc-100 truncate">{account.accountName}</span>
+                    <Badge variant="secondary" className="shrink-0 text-[10px] px-1.5 py-0">{account.platform}</Badge>
+                  </div>
+                  <p className="text-xs text-zinc-500 truncate mt-0.5">{account.emailHandle}</p>
+                  {account.notes && <p className="text-[11px] text-zinc-600 truncate mt-0.5">{account.notes}</p>}
+                </div>
+
+                {/* Password reveal */}
+                <div className="shrink-0 hidden sm:block">
+                  <PasswordReveal accountId={account.id} />
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEditAccount(account)}
+                    title="Edit"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:text-red-400"
+                    onClick={() => setDeleteAccount(account)}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "ghost"}
+                    size="icon"
+                    onClick={() => setCurrentPage(page)}
+                    className="h-8 w-8"
+                  >
+                    {page}
+                  </Button>
+                ))}
               </div>
 
-              {/* Password reveal */}
-              <div className="shrink-0 hidden sm:block">
-                <PasswordReveal accountId={account.id} />
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setEditAccount(account)}
-                  title="Edit"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 hover:text-red-400"
-                  onClick={() => setDeleteAccount(account)}
-                  title="Delete"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       <AccountModal
