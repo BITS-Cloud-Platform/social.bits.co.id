@@ -43,7 +43,7 @@ function buildProfileUrl(platform: Platform, accountName: string): string | null
     case 'TikTok':
       return `https://www.tiktok.com/@${encoded}`;
     case 'Shopee':
-      return `https://shopee.co.id/${encoded}`;
+      return `https://collshp.com/${encoded}`;
     case 'X':
       return `https://x.com/${encoded}`;
     case 'LinkedIn':
