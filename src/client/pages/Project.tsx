@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Plus, ArrowLeft, Pencil, Trash2, Eye, EyeOff, Copy, Check, Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, ArrowLeft, Pencil, Trash2, Eye, EyeOff, Copy, Check, Users, Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,6 +16,42 @@ import {
 import { cn } from '../lib/utils';
 
 const ITEMS_PER_PAGE = 10;
+
+/**
+ * Build a public profile URL from a platform + account name/handle.
+ * Returns null for platforms without a resolvable public URL.
+ */
+function buildProfileUrl(platform: Platform, accountName: string): string | null {
+  const handle = accountName.replace(/^@+/, '').trim();
+  if (!handle) return null;
+  const encoded = encodeURIComponent(handle);
+  switch (platform) {
+    case 'Instagram':
+      return `https://www.instagram.com/${encoded}`;
+    case 'Gmail':
+      return `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${encoded}`;
+    case 'YouTube':
+      return `https://www.youtube.com/@${encoded}`;
+    case 'Facebook':
+      return `https://www.facebook.com/${encoded}`;
+    case 'Threads':
+      return `https://www.threads.net/@${encoded}`;
+    case 'WhatsApp':
+      return `https://wa.me/${encoded.replace(/[^0-9]/g, '')}`;
+    case 'Telegram':
+      return `https://t.me/${encoded}`;
+    case 'TikTok':
+      return `https://www.tiktok.com/@${encoded}`;
+    case 'Shopee':
+      return `https://shopee.co.id/${encoded}`;
+    case 'X':
+      return `https://x.com/${encoded}`;
+    case 'LinkedIn':
+      return `https://www.linkedin.com/in/${encoded}`;
+    default:
+      return null;
+  }
+}
 
 const accountSchema = z.object({
   platform: z.enum(PLATFORMS),
@@ -425,6 +461,17 @@ export function ProjectPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
+                  {buildProfileUrl(account.platform as Platform, account.accountName) && (
+                    <a
+                      href={buildProfileUrl(account.platform as Platform, account.accountName) ?? '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Open ${account.platform} profile`}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
