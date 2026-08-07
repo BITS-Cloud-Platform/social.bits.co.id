@@ -1,21 +1,21 @@
-# API Documentation - Social Media Account Manager
+# API Documentation - Social Manager
 
 Complete API reference for all endpoints.
 
 ## Base URL
 
 - **Local Development**: `http://localhost:8787/api`
-- **Production**: `https://your-worker.workers.dev/api`
+- **Production**: `https://social.bits.co.id/api`
 
 ## Authentication
 
-All protected endpoints require JWT token in Authorization header:
+All protected endpoints require a JWT token in the Authorization header:
 
 ```
 Authorization: Bearer <jwt_token>
 ```
 
-Token expires after **7 days**.
+Tokens expire after **7 days**.
 
 ---
 
@@ -25,7 +25,7 @@ Token expires after **7 days**.
 
 #### `GET /api/health`
 
-Check API status.
+Check API status. Does **not** require authentication.
 
 **Response:**
 ```json
@@ -43,7 +43,7 @@ Check API status.
 
 #### `POST /api/auth/register`
 
-Create new user account.
+Create a new user account.
 
 **Request Body:**
 ```json
@@ -55,9 +55,9 @@ Create new user account.
 ```
 
 **Validation:**
-- `name`: 1-200 characters
-- `email`: Valid email format, unique
-- `password`: Minimum 8 characters
+- `name`: 2-100 characters, trimmed
+- `email`: Valid email format, lowercased, unique
+- `password`: 8-128 characters
 
 **Response (201 Created):**
 ```json
@@ -66,23 +66,21 @@ Create new user account.
   "user": {
     "id": "abc123",
     "name": "John Doe",
-    "email": "john@example.com",
-    "createdAt": "2026-08-07T04:57:13.027Z",
-    "updatedAt": "2026-08-07T04:57:13.027Z"
+    "email": "john@example.com"
   }
 }
 ```
 
 **Error Responses:**
 ```json
-// 400 Bad Request
-{
-  "error": "Email already exists"
-}
-
 // 400 Bad Request (validation)
 {
   "error": "Invalid email format"
+}
+
+// 409 Conflict
+{
+  "error": "Email already registered"
 }
 ```
 
@@ -94,7 +92,7 @@ Create new user account.
 
 #### `POST /api/auth/login`
 
-Authenticate user and get JWT token.
+Authenticate a user and get a JWT token.
 
 **Request Body:**
 ```json
@@ -111,27 +109,40 @@ Authenticate user and get JWT token.
   "user": {
     "id": "abc123",
     "name": "John Doe",
-    "email": "john@example.com",
-    "createdAt": "2026-08-07T04:57:13.027Z",
-    "updatedAt": "2026-08-07T04:57:13.027Z"
+    "email": "john@example.com"
   }
 }
 ```
 
 **Error Responses:**
 ```json
-// 401 Unauthorized
+// 401 Unauthorized (generic — avoids user enumeration)
 {
   "error": "Invalid credentials"
 }
 
 // 429 Too Many Requests
 {
-  "error": "Too many requests. Please try again later."
+  "error": "Too many requests"
 }
 ```
 
 **Rate Limit:** 10 requests per 15 minutes per IP
+
+---
+
+### Logout
+
+#### `POST /api/auth/logout`
+
+Invalidates the session client-side (token is removed from localStorage by the client). Does **not** require a valid token.
+
+**Response (200 OK):**
+```json
+{
+  "success": true
+}
+```
 
 ---
 
@@ -141,7 +152,7 @@ Authenticate user and get JWT token.
 
 #### `GET /api/profile`
 
-Get current user profile.
+Get the current authenticated user's profile.
 
 **Headers:**
 ```
@@ -154,18 +165,8 @@ Authorization: Bearer <token>
   "user": {
     "id": "abc123",
     "name": "John Doe",
-    "email": "john@example.com",
-    "createdAt": "2026-08-07T04:57:13.027Z",
-    "updatedAt": "2026-08-07T04:57:13.027Z"
+    "email": "john@example.com"
   }
-}
-```
-
-**Error Responses:**
-```json
-// 401 Unauthorized
-{
-  "error": "Unauthorized"
 }
 ```
 
@@ -175,7 +176,7 @@ Authorization: Bearer <token>
 
 #### `PUT /api/profile`
 
-Update user name, email, or password.
+Update the user's name, email, or password.
 
 **Headers:**
 ```
@@ -194,8 +195,8 @@ Authorization: Bearer <token>
 
 **Rules:**
 - All fields optional
-- To change password: must provide `currentPassword` and `newPassword`
-- To change email: must provide unique email
+- To change password: must provide both `currentPassword` and `newPassword`
+- To change email: must be a unique, valid email
 - `newPassword`: minimum 8 characters
 
 **Response (200 OK):**
@@ -204,28 +205,8 @@ Authorization: Bearer <token>
   "user": {
     "id": "abc123",
     "name": "Jane Doe",
-    "email": "jane@example.com",
-    "createdAt": "2026-08-07T04:57:13.027Z",
-    "updatedAt": "2026-08-07T05:10:22.153Z"
+    "email": "jane@example.com"
   }
-}
-```
-
-**Error Responses:**
-```json
-// 400 Bad Request
-{
-  "error": "Email already in use"
-}
-
-// 400 Bad Request
-{
-  "error": "Current password is incorrect"
-}
-
-// 400 Bad Request
-{
-  "error": "Current password required to set new password"
 }
 ```
 
@@ -237,7 +218,7 @@ Authorization: Bearer <token>
 
 #### `GET /api/projects`
 
-Get all projects for authenticated user.
+Get all projects owned by the authenticated user.
 
 **Headers:**
 ```
@@ -253,16 +234,8 @@ Authorization: Bearer <token>
       "userId": "abc123",
       "name": "Banten IT Solutions",
       "description": "Social accounts for Banten IT",
-      "createdAt": "2026-08-07T04:57:13.027Z",
-      "updatedAt": "2026-08-07T04:57:13.027Z"
-    },
-    {
-      "id": "proj456",
-      "userId": "abc123",
-      "name": "Personal Brand",
-      "description": null,
-      "createdAt": "2026-08-07T05:00:00.000Z",
-      "updatedAt": "2026-08-07T05:00:00.000Z"
+      "createdAt": 1723006633027,
+      "updatedAt": 1723006633027
     }
   ]
 }
@@ -274,12 +247,7 @@ Authorization: Bearer <token>
 
 #### `POST /api/projects`
 
-Create new project.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
+Create a new project.
 
 **Request Body:**
 ```json
@@ -301,8 +269,8 @@ Authorization: Bearer <token>
     "userId": "abc123",
     "name": "New Project",
     "description": "Optional description",
-    "createdAt": "2026-08-07T05:15:00.000Z",
-    "updatedAt": "2026-08-07T05:15:00.000Z"
+    "createdAt": 1723006633027,
+    "updatedAt": 1723006633027
   }
 }
 ```
@@ -313,12 +281,7 @@ Authorization: Bearer <token>
 
 #### `PUT /api/projects/:id`
 
-Update existing project.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
+Update an existing project.
 
 **Request Body:**
 ```json
@@ -336,8 +299,8 @@ Authorization: Bearer <token>
     "userId": "abc123",
     "name": "Updated Name",
     "description": "Updated description",
-    "createdAt": "2026-08-07T05:15:00.000Z",
-    "updatedAt": "2026-08-07T05:20:00.000Z"
+    "createdAt": 1723006633027,
+    "updatedAt": 1723006645000
   }
 }
 ```
@@ -349,9 +312,9 @@ Authorization: Bearer <token>
   "error": "Project not found"
 }
 
-// 403 Forbidden
+// 404 Not Found (not owned by user)
 {
-  "error": "Unauthorized to access this project"
+  "error": "Not found"
 }
 ```
 
@@ -361,12 +324,7 @@ Authorization: Bearer <token>
 
 #### `DELETE /api/projects/:id`
 
-Delete project and all associated social accounts.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
+Delete a project and all of its associated social accounts.
 
 **Response (200 OK):**
 ```json
@@ -375,15 +333,7 @@ Authorization: Bearer <token>
 }
 ```
 
-**Error Responses:**
-```json
-// 404 Not Found
-{
-  "error": "Project not found"
-}
-```
-
-**Note:** Cascade deletes all social_accounts under this project.
+**Note:** Cascade-deletes all `social_accounts` rows under this project.
 
 ---
 
@@ -391,17 +341,12 @@ Authorization: Bearer <token>
 
 ### List Social Accounts
 
-#### `GET /api/accounts?project_id=<id>`
+#### `GET /api/accounts?projectId=<id>`
 
-Get all social accounts for a project.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
+Get all social accounts for an owned project. Passwords are **never** returned in the list; `passwordEncrypted` is stripped.
 
 **Query Parameters:**
-- `project_id` (required): Project ID
+- `projectId`: Project ID. Omitting it returns accounts across all of the user's projects.
 
 **Response (200 OK):**
 ```json
@@ -413,36 +358,44 @@ Authorization: Bearer <token>
       "platform": "Gmail",
       "accountName": "work@company.com",
       "emailHandle": "work@company.com",
-      "passwordEncrypted": "encrypted_base64_string...",
       "notes": "Main work email",
-      "createdAt": "2026-08-07T05:15:00.000Z",
-      "updatedAt": "2026-08-07T05:15:00.000Z"
-    },
-    {
-      "id": "acc456",
-      "projectId": "proj789",
-      "platform": "Instagram",
-      "accountName": "@company_official",
-      "emailHandle": "social@company.com",
-      "passwordEncrypted": "encrypted_base64_string...",
-      "notes": null,
-      "createdAt": "2026-08-07T05:16:00.000Z",
-      "updatedAt": "2026-08-07T05:16:00.000Z"
+      "createdAt": 1723006633027,
+      "updatedAt": 1723006633027
     }
   ]
 }
 ```
 
+---
+
+### Get Social Account (decrypt password)
+
+#### `GET /api/accounts/:id`
+
+Fetch a single account. On success the stored password is **decrypted and returned** in the `password` field. This is the endpoint used by the "reveal password" feature.
+
+**Response (200 OK):**
+```json
+{
+  "account": {
+    "id": "acc123",
+    "projectId": "proj789",
+    "platform": "Gmail",
+    "accountName": "work@company.com",
+    "emailHandle": "work@company.com",
+    "password": "PlainTextPassword123!",
+    "notes": "Main work email",
+    "createdAt": 1783006633027,
+    "updatedAt": 1783006633027
+  }
+}
+```
+
 **Error Responses:**
 ```json
-// 400 Bad Request
+// 404 Not Found
 {
-  "error": "project_id required"
-}
-
-// 403 Forbidden
-{
-  "error": "Unauthorized to access this project"
+  "error": "Not found"
 }
 ```
 
@@ -452,12 +405,7 @@ Authorization: Bearer <token>
 
 #### `POST /api/accounts`
 
-Add new social account to project.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
+Add a new social account to a project.
 
 **Request Body:**
 ```json
@@ -485,31 +433,14 @@ Authorization: Bearer <token>
 - LinkedIn
 
 **Validation:**
-- `projectId`: Valid project ID owned by user
-- `platform`: Must be one of supported platforms
-- `accountName`: 1-200 characters
-- `emailHandle`: 1-200 characters
-- `password`: 1-500 characters (will be encrypted)
-- `notes`: 0-1000 characters, optional
+- `projectId`: Must reference a project owned by the user
+- `platform`: Must be one of the supported platforms
+- `accountName`: 1-200 characters, trimmed
+- `emailHandle`: 1-500 characters, trimmed
+- `password`: 1-1000 characters (encrypted with AES-256-GCM before storage)
+- `notes`: 0-2000 characters, optional
 
-**Response (201 Created):**
-```json
-{
-  "account": {
-    "id": "acc789",
-    "projectId": "proj789",
-    "platform": "Gmail",
-    "accountName": "work@company.com",
-    "emailHandle": "work@company.com",
-    "passwordEncrypted": "encrypted_base64_string...",
-    "notes": "Optional notes",
-    "createdAt": "2026-08-07T05:20:00.000Z",
-    "updatedAt": "2026-08-07T05:20:00.000Z"
-  }
-}
-```
-
-**Note:** Password is encrypted with AES-256-GCM before storage.
+**Response (201 Created):** The created account (without `passwordEncrypted`).
 
 ---
 
@@ -517,12 +448,7 @@ Authorization: Bearer <token>
 
 #### `PUT /api/accounts/:id`
 
-Update existing social account.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
+Update an existing social account.
 
 **Request Body:**
 ```json
@@ -537,25 +463,10 @@ Authorization: Bearer <token>
 
 **Rules:**
 - All fields optional
-- Provide `password` to update encrypted password
-- Cannot change `projectId`
+- Provide `password` to re-encrypt a new password
+- `projectId` changes are validated but currently ignored
 
-**Response (200 OK):**
-```json
-{
-  "account": {
-    "id": "acc789",
-    "projectId": "proj789",
-    "platform": "Gmail",
-    "accountName": "updated@company.com",
-    "emailHandle": "updated@company.com",
-    "passwordEncrypted": "new_encrypted_base64_string...",
-    "notes": "Updated notes",
-    "createdAt": "2026-08-07T05:20:00.000Z",
-    "updatedAt": "2026-08-07T05:25:00.000Z"
-  }
-}
-```
+**Response (200 OK):** The updated account (without `passwordEncrypted`).
 
 ---
 
@@ -563,12 +474,7 @@ Authorization: Bearer <token>
 
 #### `DELETE /api/accounts/:id`
 
-Delete social account.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
+Delete a social account.
 
 **Response (200 OK):**
 ```json
@@ -581,63 +487,9 @@ Authorization: Bearer <token>
 ```json
 // 404 Not Found
 {
-  "error": "Account not found"
+  "error": "Not found"
 }
 ```
-
----
-
-### Decrypt Account Password
-
-#### `GET /api/accounts/:id/password`
-
-Decrypt and retrieve account password.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
-
-**Response (200 OK):**
-```json
-{
-  "password": "PlainTextPassword123!"
-}
-```
-
-**Error Responses:**
-```json
-// 404 Not Found
-{
-  "error": "Account not found"
-}
-
-// 500 Internal Server Error
-{
-  "error": "Failed to decrypt password"
-}
-```
-
-**Security Notes:**
-- Password decrypted on-demand only
-- Not logged or cached
-- Requires valid JWT token
-- User must own the project
-
----
-
-## Error Codes Summary
-
-| Status Code | Description |
-|-------------|-------------|
-| 200 | Success |
-| 201 | Created |
-| 400 | Bad Request (validation error) |
-| 401 | Unauthorized (invalid/missing token) |
-| 403 | Forbidden (insufficient permissions) |
-| 404 | Not Found |
-| 429 | Too Many Requests (rate limited) |
-| 500 | Internal Server Error |
 
 ---
 
@@ -645,16 +497,11 @@ Authorization: Bearer <token>
 
 | Endpoint | Limit |
 |----------|-------|
-| `/api/auth/register` | 10 requests / 15 minutes per IP |
-| `/api/auth/login` | 10 requests / 15 minutes per IP |
-| All other endpoints | No limit (add as needed) |
+| `POST /api/auth/register` | 10 requests / 15 min / IP |
+| `POST /api/auth/login` | 10 requests / 15 min / IP |
+| All other endpoints | No limit |
 
-Rate limit headers:
-```
-X-RateLimit-Limit: 10
-X-RateLimit-Remaining: 7
-X-RateLimit-Reset: 1723007493
-```
+When rate-limited the API returns HTTP `429` with a `Retry-After` header (seconds until retry) and body `{ "error": "Too many requests" }`.
 
 ---
 
@@ -662,21 +509,21 @@ X-RateLimit-Reset: 1723007493
 
 ### Register
 ```bash
-curl -X POST https://your-worker.workers.dev/api/auth/register \
+curl -X POST https://social.bits.co.id/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"name":"John Doe","email":"john@example.com","password":"SecurePass123!"}'
 ```
 
 ### Login
 ```bash
-curl -X POST https://your-worker.workers.dev/api/auth/login \
+curl -X POST https://social.bits.co.id/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"john@example.com","password":"SecurePass123!"}'
 ```
 
 ### Create Project
 ```bash
-curl -X POST https://your-worker.workers.dev/api/projects \
+curl -X POST https://social.bits.co.id/api/projects \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{"name":"Banten IT Solutions","description":"Social accounts"}'
@@ -684,7 +531,7 @@ curl -X POST https://your-worker.workers.dev/api/projects \
 
 ### Create Social Account
 ```bash
-curl -X POST https://your-worker.workers.dev/api/accounts \
+curl -X POST https://social.bits.co.id/api/accounts \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
@@ -697,9 +544,9 @@ curl -X POST https://your-worker.workers.dev/api/accounts \
   }'
 ```
 
-### Decrypt Password
+### Get Account (decrypt password)
 ```bash
-curl https://your-worker.workers.dev/api/accounts/acc123/password \
+curl https://social.bits.co.id/api/accounts/acc123 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -707,37 +554,41 @@ curl https://your-worker.workers.dev/api/accounts/acc123/password \
 
 ## TypeScript Types
 
-All API types available in `src/client/lib/types.ts`:
+All API types live in `src/client/lib/types.ts`:
 
 ```typescript
 export interface User {
   id: string;
   name: string;
   email: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: number;
 }
 
 export interface Project {
   id: string;
   userId: string;
   name: string;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
+  description?: string | null;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface SocialAccount {
   id: string;
   projectId: string;
-  platform: string;
+  platform: Platform;
   accountName: string;
   emailHandle: string;
-  passwordEncrypted: string;
-  notes: string | null;
-  createdAt: string;
-  updatedAt: string;
+  notes?: string | null;
+  password?: string; // only returned on GET /:id
+  createdAt: number;
+  updatedAt: number;
 }
+
+export const PLATFORMS = [
+  'Gmail', 'YouTube', 'Facebook', 'Instagram', 'Threads',
+  'WhatsApp', 'Telegram', 'TikTok', 'Shopee', 'X', 'LinkedIn',
+] as const;
 ```
 
 ---

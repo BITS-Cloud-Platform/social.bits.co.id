@@ -9,7 +9,7 @@ import type { Project, SocialAccount } from '../lib/types';
 import { PLATFORMS, type Platform } from '../lib/types';
 import { PlatformIcon, PLATFORM_COLORS, PLATFORM_BG } from '../components/PlatformIcon';
 import {
-  Button, Input, Textarea, Select, FormField, Alert,
+  Button, Input, Textarea, CustomSelect, FormField, Alert,
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
   Badge, Separator,
 } from '../components/ui';
@@ -41,7 +41,7 @@ function AccountModal({ open, onClose, account, projectId, onSave }: {
   const resolver = isEdit
     ? zodResolver(editAccountSchema as unknown as typeof accountSchema)
     : zodResolver(accountSchema);
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<AccountForm>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<AccountForm>({
     resolver,
     defaultValues: {
       platform: account?.platform ?? 'Gmail',
@@ -51,6 +51,7 @@ function AccountModal({ open, onClose, account, projectId, onSave }: {
       notes: account?.notes ?? '',
     },
   });
+  const selectedPlatform = watch('platform');
 
   useEffect(() => {
     reset({
@@ -93,9 +94,11 @@ function AccountModal({ open, onClose, account, projectId, onSave }: {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && <Alert variant="destructive">{error}</Alert>}
           <FormField label="Platform" error={errors.platform?.message} required>
-            <Select {...register('platform')}>
-              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
-            </Select>
+            <CustomSelect
+              value={selectedPlatform}
+              onChange={(value) => setValue('platform', value as AccountForm['platform'], { shouldValidate: true })}
+              options={PLATFORMS.map(p => ({ value: p, label: p }))}
+            />
           </FormField>
           <FormField label="Account name" error={errors.accountName?.message} required>
             <Input placeholder="e.g. My Business Account" {...register('accountName')} />
@@ -143,9 +146,26 @@ function PasswordReveal({ accountId }: { accountId: string }) {
 
   const copy = async () => {
     if (!password) return;
-    await navigator.clipboard.writeText(password);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const text = password;
+    try {
+      // Preferred: async Clipboard API (requires secure context)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback: hidden textarea + legacy execCommand
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* ignore clipboard failure */ }
   };
 
   if (!show) {
@@ -157,11 +177,14 @@ function PasswordReveal({ accountId }: { accountId: string }) {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5 shrink-0">
+      <code className="text-xs bg-zinc-800 border border-zinc-700 px-2 py-1 rounded font-mono text-zinc-200 max-w-[140px] truncate select-all">
+        {password ?? ''}
+      </code>
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copy} title="Copy password">
         {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShow(false)} title="Hide password">
+      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-red-400" onClick={() => setShow(false)} title="Hide password">
         <EyeOff className="h-4 w-4" />
       </Button>
     </div>
@@ -339,16 +362,15 @@ export function ProjectPage() {
 
         {/* Platform filter */}
         {platforms.length > 0 && (
-          <Select
+          <CustomSelect
             value={filterPlatform}
-            onChange={(e) => setFilterPlatform(e.target.value)}
+            onChange={(value) => setFilterPlatform(value)}
+            options={[
+              { value: 'all', label: `All Platforms (${accounts.length})` },
+              ...platforms.map(p => ({ value: p, label: p }))
+            ]}
             className="sm:w-48"
-          >
-            <option value="all">All Platforms ({accounts.length})</option>
-            {platforms.map(p => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </Select>
+          />
         )}
       </div>
 

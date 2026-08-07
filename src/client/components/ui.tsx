@@ -56,12 +56,101 @@ export const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttribute
 );
 Label.displayName = 'Label';
 
-// Select
+// Select (Native - for forms)
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
-export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(({ className, ...props }, ref) => (
-  <select ref={ref} className={cn('flex h-9 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1 text-sm text-zinc-100 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:cursor-not-allowed disabled:opacity-50', className)} {...props} />
+export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(({ className, children, ...props }, ref) => (
+  <select 
+    ref={ref} 
+    className={cn(
+      'flex h-9 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1 text-sm text-zinc-100 shadow-sm',
+      'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400',
+      'disabled:cursor-not-allowed disabled:opacity-50',
+      '[&>option]:bg-zinc-900 [&>option]:text-zinc-100',
+      className
+    )} 
+    {...props}
+  >
+    {children}
+  </select>
 ));
 Select.displayName = 'Select';
+
+// Custom Select (Dropdown style)
+interface CustomSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  className?: string;
+}
+
+export const CustomSelect = ({ value, onChange, options, placeholder = 'Select...', className }: CustomSelectProps) => {
+  const [open, setOpen] = React.useState(false);
+  const selectedOption = options.find(opt => opt.value === value);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={ref} className={cn('relative', className)}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          'flex h-9 w-full items-center justify-between rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1 text-sm shadow-sm',
+          'hover:bg-zinc-800 transition-colors',
+          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400',
+          open ? 'ring-1 ring-zinc-400' : ''
+        )}
+      >
+        <span className={selectedOption ? 'text-zinc-100' : 'text-zinc-500'}>
+          {selectedOption?.label ?? placeholder}
+        </span>
+        <svg
+          className={cn('h-4 w-4 text-zinc-500 transition-transform', open ? 'rotate-180' : '')}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-zinc-700 bg-zinc-900 shadow-lg animate-fade-in">
+          <div className="max-h-60 overflow-auto p-1">
+            {options.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'w-full text-left px-3 py-2 text-sm rounded transition-colors',
+                  value === option.value
+                    ? 'bg-violet-600 text-white'
+                    : 'text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Card
 export const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

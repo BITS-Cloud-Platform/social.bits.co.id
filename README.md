@@ -14,9 +14,10 @@ Powered by [Banten IT Solutions](https://bits.co.id)
 - **Authentication**: Register & Login dengan bcrypt hashing
 - **Project Management**: Organize social accounts by project (e.g., "Banten IT Solutions")
 - **Social Account Tracking**: Support 11 platform populer dengan CRUD operations
-- **Password Management**: Encrypted storage dengan AES-256-GCM
+- **Password Management**: Encrypted storage dengan AES-256-GCM, reveal & copy on demand
 - **Profile Management**: Edit nama, email, dan password user
 - **Modern UI**: Dark minimalist design dengan icon-based navigation (Vercel Dashboard style)
+- **Custom Select Dropdowns**: Select2-style dropdown untuk filter platform & form, konsisten dengan tema gelap
 - **Responsive**: Mobile, tablet, dan desktop optimized
 - **Security**: JWT auth, CORS, rate limiting, input validation
 - **Type-Safe**: Full TypeScript implementation
@@ -40,8 +41,7 @@ Powered by [Banten IT Solutions](https://bits.co.id)
 **Frontend:**
 - React 18 + TypeScript
 - React Router v6
-- React Hook Form
-- Zod (validation)
+- React Hook Form + Zod (validation)
 - Zustand (state management)
 - Tailwind CSS (dark mode)
 - Lucide React (icons)
@@ -113,9 +113,9 @@ npm run dev
 ```
 
 Opens:
-- Frontend: `http://localhost:5173`
+- Frontend: `http://localhost:5173` (also exposed on network IPs, e.g. `http://<your-ip>:5173`)
 - Worker API: `http://localhost:8787`
-- API proxied through Vite
+- API proxied through Vite (`/api` → `localhost:8787`)
 
 ### 6. Build & Deploy
 
@@ -235,11 +235,11 @@ CREATE TABLE social_accounts (
 
 ### Social Accounts
 
-- `GET /api/accounts?project_id=<id>` - List accounts per project
+- `GET /api/accounts?projectId=<id>` - List accounts per project
+- `GET /api/accounts/:id` - Fetch account & decrypt password (reveal feature)
 - `POST /api/accounts` - Create social account
 - `PUT /api/accounts/:id` - Update social account
 - `DELETE /api/accounts/:id` - Delete social account
-- `GET /api/accounts/:id/password` - Decrypt & retrieve password
 
 ## 🔒 Security Features
 
@@ -250,9 +250,10 @@ CREATE TABLE social_accounts (
 
 ### Account Password Encryption
 - **Algorithm**: AES-256-GCM
-- **Key**: Derived from ENCRYPTION_KEY via HKDF
-- **IV**: Random per encryption
-- **Auth Tag**: Validates integrity
+- **Key**: Raw 32-byte key derived directly from `ENCRYPTION_KEY` (64 hex chars)
+- **IV**: Random 12 bytes per encryption, prepended to ciphertext
+- **Auth Tag**: 16 bytes appended for integrity validation
+- **Format**: `base64( iv[12] || ciphertext || authTag[16] )`
 
 ### JWT Authentication
 - **Algorithm**: HMAC SHA-256 (Web Crypto API)
@@ -296,7 +297,7 @@ Requires `wrangler dev` running in another terminal.
 
 ✅ All 17 unit tests passing
 ✅ Build succeeds (Vite + TypeScript strict mode)
-✅ No bundle bloat (Gzip: ~37KB JS)
+✅ Minimal bundle (app gzip ~38KB, vendor ~53KB)
 ✅ TypeScript type-safe end-to-end
 ✅ Dark mode default UI
 ✅ Responsive design (mobile to desktop)
@@ -310,13 +311,14 @@ Requires `wrangler dev` running in another terminal.
 
 - **Dark Minimalist Theme**: Zinc color palette (Vercel-inspired)
 - **Icon-Based Navigation**: Lucide React icons throughout
-- **Responsive Layout**: Sidebar collapses on mobile
+- **Ultra-Compact Sidebar**: 64px icon-only sidebar with right-side tooltips
+- **Responsive Layout**: Mobile to desktop optimized
 - **Platform Icons**: Custom SVG icons for 11 platforms
 - **Form Validation**: Real-time error feedback
-- **Toast Notifications**: Success/error messages
-- **Password Reveal**: Click to decrypt & copy account passwords
-- **Platform Filtering**: Filter accounts by platform
-- **Keyboard Shortcuts**: (Optional, can be added)
+- **Custom Selects**: Native-style dropdowns (filter & form) themed to match the UI
+- **Password Reveal**: Click an eye to decrypt-inline, then copy or hide
+- **Project Card Hover**: Gradient hover effect with live account counts
+- **Account Search & Filter**: Search by name/email/platform/notes + pagination
 
 ## 🌐 Environment Variables
 
@@ -345,7 +347,7 @@ Auth endpoints (`/api/auth/login`, `/api/auth/register`) limited to **10 request
 
 ### Password Reveal
 
-Account passwords are encrypted and only decrypted on-demand via `/api/accounts/:id/password`. Decrypted password is NOT logged or stored.
+Account passwords are encrypted and only decrypted on-demand via `GET /api/accounts/:id`. The decrypted password is fetched live for the reveal feature and is **not logged or stored client-side** beyond the current view state.
 
 ### Token Refresh
 
@@ -353,11 +355,11 @@ Current implementation uses 7-day JWT tokens without refresh tokens. For longer 
 
 ### CORS
 
-CORS is permissive in development (`origin: '*'`). For production, tighten to your domain:
+CORS reflects the request origin and allows credentials. For a locked-down setup, restrict to your domain in `src/worker/index.ts`:
 
 ```typescript
 app.use('/api/*', cors({
-  origin: 'https://yourdomain.com',
+  origin: 'https://social.bits.co.id',
   // ...
 }));
 ```
@@ -402,14 +404,15 @@ Update CORS origin in `src/worker/index.ts` to match your deployment domain.
 ## 📖 Further Customization
 
 ### Adding More Platforms
-1. Update `PLATFORMS` in `src/client/pages/Project.tsx`
+1. Update `PLATFORMS` in `src/client/lib/types.ts`
 2. Add SVG icon to `PlatformIcon.tsx`
-3. Redeploy
+3. Update `PLATFORMS` list in `src/worker/routes/accounts.ts` (Zod enum)
+4. Redeploy
 
 ### Custom Domain
 Update `wrangler.toml`:
 ```toml
-route = "yourdomain.com/social-manager/*"
+route = "social.bits.co.id/*"
 ```
 
 ### Database Backups
