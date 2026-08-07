@@ -1,0 +1,19 @@
+name = "social-manager"
+main = "src/worker/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "social-manager-db"
+database_id = "local-dev-id"
+migrations_dir = "migrations"
+
+[vars]
+JWT_SECRET = "change-me-in-production-min-32-chars-long"
+ENCRYPTION_KEY = "0000000000000000000000000000000000000000000000000000000000000000"
