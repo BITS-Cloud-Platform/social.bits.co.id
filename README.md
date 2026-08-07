@@ -35,6 +35,7 @@ Powered by [Banten IT Solutions](https://bits.co.id)
 - Shopee
 - X (Twitter)
 - LinkedIn
+- GitHub
 
 ## 🛠️ Tech Stack
 

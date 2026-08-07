@@ -28,7 +28,7 @@ export interface SocialAccount {
 
 export const PLATFORMS = [
   'Gmail', 'YouTube', 'Facebook', 'Instagram', 'Threads',
-  'WhatsApp', 'Telegram', 'TikTok', 'Shopee', 'X', 'LinkedIn',
+  'WhatsApp', 'Telegram', 'TikTok', 'Shopee', 'X', 'LinkedIn', 'GitHub',
 ] as const;
 
 export type Platform = typeof PLATFORMS[number];

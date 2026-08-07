@@ -13,7 +13,7 @@ accountsRouter.use('*', authMiddleware);
 
 const PLATFORMS = [
   'Gmail', 'YouTube', 'Facebook', 'Instagram', 'Threads',
-  'WhatsApp', 'Telegram', 'TikTok', 'Shopee', 'X', 'LinkedIn',
+  'WhatsApp', 'Telegram', 'TikTok', 'Shopee', 'X', 'LinkedIn', 'GitHub',
 ] as const;
 
 const createSchema = z.object({

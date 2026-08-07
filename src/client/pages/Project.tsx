@@ -48,6 +48,8 @@ function buildProfileUrl(platform: Platform, accountName: string): string | null
       return `https://x.com/${encoded}`;
     case 'LinkedIn':
       return `https://www.linkedin.com/in/${encoded}`;
+    case 'GitHub':
+      return `https://github.com/${encoded}`;
     default:
       return null;
   }

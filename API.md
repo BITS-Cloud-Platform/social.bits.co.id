@@ -431,6 +431,7 @@ Add a new social account to a project.
 - Shopee
 - X
 - LinkedIn
+- GitHub
 
 **Validation:**
 - `projectId`: Must reference a project owned by the user
@@ -587,7 +588,7 @@ export interface SocialAccount {
 
 export const PLATFORMS = [
   'Gmail', 'YouTube', 'Facebook', 'Instagram', 'Threads',
-  'WhatsApp', 'Telegram', 'TikTok', 'Shopee', 'X', 'LinkedIn',
+  'WhatsApp', 'Telegram', 'TikTok', 'Shopee', 'X', 'LinkedIn', 'GitHub',
 ] as const;
 ```
 
