@@ -432,7 +432,7 @@ export function ProjectPage() {
       ) : (
         <>
           {/* Accounts list */}
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {paginatedAccounts.map((account: SocialAccount) => (
               <div
                 key={account.id}
