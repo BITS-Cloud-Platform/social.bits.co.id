@@ -418,10 +418,11 @@ Buka **Settings → Secrets and variables → Actions** di GitHub repo, lalu tam
 |--------|-------|------------|
 | `CLOUDFLARE_API_TOKEN` | API token Cloudflare | Dashboard **My Profile → API Tokens → Create Token** dengan permissions: `Account - Workers Scripts - Edit`, `Account - D1 - Edit`, `Account - Account Settings - Read`, `Zone - Workers Routes - Edit` |
 | `CLOUDFLARE_ACCOUNT_ID` | Account ID Cloudflare | Dashboard → sidebar kanan (berikut nama akun, format hex 32 karakter) |
+| `D1_DATABASE_ID` | ID D1 database (`social-manager-db`) | Jalankan `wrangler d1 list` lalu salin kolom `database_id` |
 
-> ⚠️ Pastikan `database_id` di `wrangler.toml` sudah diisi ID D1 asli (bukan placeholder `"local-dev-id"`), karena workflow apply migrasi `--remote` terhadap database tersebut.
+> ⚠️ `D1_DATABASE_ID` **wajib** disetel. Workflow mengisi `database_id` di `wrangler.toml` dari secret ini (placeholder `"local-dev-id"` dipakai hanya untuk dev lokal). Tanpa secret ini, migrasi remote akan gagal dengan `Invalid property: databaseId => Invalid uuid`.
 
-> ⚠️ `JWT_SECRET` dan `ENCRYPTION_KEY` sudah diset satu kali via `wrangler secret put` dan dipertahankan Cloudflare antar deploy — tidak perlu di-set di GitHub.
+> ℹ️ `JWT_SECRET` dan `ENCRYPTION_KEY` sudah diset satu kali via `wrangler secret put` dan dipertahankan Cloudflare antar deploy — tidak perlu di-set di GitHub.
 
 ### 🧪 Uji coba tanpa push
 
@@ -441,7 +442,7 @@ Buka tab **Actions → Deploy to Cloudflare → Run workflow** lalu pilih branch
 - [ ] `wrangler secret put JWT_SECRET`
 - [ ] `wrangler secret put ENCRYPTION_KEY`
 - [ ] Update CORS origin untuk production domain
-- [ ] Tambah secrets `CLOUDFLARE_API_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` di GitHub
+- [ ] Tambah secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, & `D1_DATABASE_ID` di GitHub
 - [ ] Tindakan terakhir: push ke `main` (workflow auto-deploy)
 
 **Setelah itu**, semua update cukup `git push` ke `main` — deploy otomatis.

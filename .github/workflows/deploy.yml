@@ -37,6 +37,14 @@ jobs:
       - name: Build client assets
         run: npm run build
 
+      - name: Inject D1 database ID into wrangler.toml
+        run: |
+          if [ -n "${{ secrets.D1_DATABASE_ID }}" ]; then
+            sed -i "s|database_id = \"local-dev-id\"|database_id = \"${{ secrets.D1_DATABASE_ID }}\"|" wrangler.toml
+          else
+            echo "::warning::D1_DATABASE_ID secret not set. Using database_id from wrangler.toml."
+          fi
+
       - name: Deploy Worker & apply D1 migrations
         uses: cloudflare/wrangler-action@v4
         with:
