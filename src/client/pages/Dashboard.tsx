@@ -15,8 +15,10 @@ import {
 
 // Helper to format date
 const formatDate = (timestamp: number) => {
-  const d = new Date(timestamp * 1000); // Convert unix timestamp to milliseconds
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  // Timestamp is already in seconds from SQLite unixepoch()
+  const d = new Date(timestamp * 1000);
+  if (isNaN(d.getTime())) return 'Recently';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 const projectSchema = z.object({
@@ -135,6 +137,7 @@ export function DashboardPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
+  const [accountCounts, setAccountCounts] = useState<Record<string, number>>({});
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
@@ -142,6 +145,20 @@ export function DashboardPage() {
     try {
       const res = await api.projects.list();
       setProjects(res.projects);
+      
+      // Fetch account counts for each project
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        res.projects.map(async (project) => {
+          try {
+            const accountsRes = await api.accounts.list(project.id);
+            counts[project.id] = accountsRes.accounts.length;
+          } catch {
+            counts[project.id] = 0;
+          }
+        })
+      );
+      setAccountCounts(counts);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load projects');
     } finally {
@@ -223,7 +240,7 @@ export function DashboardPage() {
                         {project.name}
                       </h3>
                       {project.description && (
-                        <p className="text-xs text-zinc-500 line-clamp-2 mt-1">
+                        <p className="text-[11px] text-zinc-500 truncate mt-0.5">
                           {project.description}
                         </p>
                       )}
@@ -267,7 +284,7 @@ export function DashboardPage() {
                     {/* Account count badge */}
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-violet-500/60" />
-                      <span>0 accounts</span>
+                      <span>{accountCounts[project.id] ?? 0} {accountCounts[project.id] === 1 ? 'account' : 'accounts'}</span>
                     </div>
                     
                     {/* Updated date */}
