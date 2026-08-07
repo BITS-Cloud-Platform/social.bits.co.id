@@ -70,7 +70,7 @@ export function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-xl">
+    <div className="space-y-6 animate-fade-in max-w-6xl">
       <div>
         <h1 className="text-xl font-semibold text-zinc-100">Profile</h1>
         <p className="text-sm text-zinc-500 mt-0.5">Manage your account settings</p>
@@ -89,62 +89,65 @@ export function ProfilePage() {
 
       <Separator />
 
-      {/* Profile info */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-zinc-400" />
-            <CardTitle>Personal info</CardTitle>
-          </div>
-          <CardDescription>Update your name and email address</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-            {profileError && <Alert variant="destructive">{profileError}</Alert>}
-            {profileSuccess && <Alert>Profile updated successfully.</Alert>}
-            <FormField label="Name" error={profileForm.formState.errors.name?.message} required>
-              <Input {...profileForm.register('name')} />
-            </FormField>
-            <FormField label="Email" error={profileForm.formState.errors.email?.message} required>
-              <Input type="email" {...profileForm.register('email')} />
-            </FormField>
-            <Button type="submit" loading={profileForm.formState.isSubmitting}>
-              <Save className="h-4 w-4 mr-1.5" />
-              Save changes
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {/* 2 Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Profile info */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-zinc-400" />
+              <CardTitle>Personal info</CardTitle>
+            </div>
+            <CardDescription>Update your name and email address</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+              {profileError && <Alert variant="destructive">{profileError}</Alert>}
+              {profileSuccess && <Alert>Profile updated successfully.</Alert>}
+              <FormField label="Name" error={profileForm.formState.errors.name?.message} required>
+                <Input {...profileForm.register('name')} />
+              </FormField>
+              <FormField label="Email" error={profileForm.formState.errors.email?.message} required>
+                <Input type="email" {...profileForm.register('email')} />
+              </FormField>
+              <Button type="submit" loading={profileForm.formState.isSubmitting}>
+                <Save className="h-4 w-4 mr-1.5" />
+                Save changes
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-      {/* Password */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-zinc-400" />
-            <CardTitle>Change password</CardTitle>
-          </div>
-          <CardDescription>Use a strong password with at least 8 characters</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-            {pwError && <Alert variant="destructive">{pwError}</Alert>}
-            {pwSuccess && <Alert>Password changed successfully.</Alert>}
-            <FormField label="Current password" error={passwordForm.formState.errors.currentPassword?.message} required>
-              <Input type="password" autoComplete="current-password" {...passwordForm.register('currentPassword')} />
-            </FormField>
-            <FormField label="New password" error={passwordForm.formState.errors.newPassword?.message} required>
-              <Input type="password" autoComplete="new-password" {...passwordForm.register('newPassword')} />
-            </FormField>
-            <FormField label="Confirm new password" error={passwordForm.formState.errors.confirmPassword?.message} required>
-              <Input type="password" autoComplete="new-password" {...passwordForm.register('confirmPassword')} />
-            </FormField>
-            <Button type="submit" loading={passwordForm.formState.isSubmitting}>
-              <Lock className="h-4 w-4 mr-1.5" />
-              Update password
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+        {/* Password */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-zinc-400" />
+              <CardTitle>Change password</CardTitle>
+            </div>
+            <CardDescription>Use a strong password with at least 8 characters</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+              {pwError && <Alert variant="destructive">{pwError}</Alert>}
+              {pwSuccess && <Alert>Password changed successfully.</Alert>}
+              <FormField label="Current password" error={passwordForm.formState.errors.currentPassword?.message} required>
+                <Input type="password" autoComplete="current-password" {...passwordForm.register('currentPassword')} />
+              </FormField>
+              <FormField label="New password" error={passwordForm.formState.errors.newPassword?.message} required>
+                <Input type="password" autoComplete="new-password" {...passwordForm.register('newPassword')} />
+              </FormField>
+              <FormField label="Confirm new password" error={passwordForm.formState.errors.confirmPassword?.message} required>
+                <Input type="password" autoComplete="new-password" {...passwordForm.register('confirmPassword')} />
+              </FormField>
+              <Button type="submit" loading={passwordForm.formState.isSubmitting}>
+                <Lock className="h-4 w-4 mr-1.5" />
+                Update password
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
